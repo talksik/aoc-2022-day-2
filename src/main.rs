@@ -5,8 +5,45 @@ enum Move {
     Scissors,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq)]
+enum ElfSuggestion {
+    Lose,
+    Draw,
+    Win,
+}
+
+// based on what the elf suggests, choose
+// the move based on the other players move
+fn choose_move(opponent_move: Move, elf_suggestion: ElfSuggestion) -> Move {
+    match elf_suggestion {
+        ElfSuggestion::Lose => match opponent_move {
+            Move::Rock => Move::Scissors,
+            Move::Paper => Move::Rock,
+            Move::Scissors => Move::Paper,
+        },
+        ElfSuggestion::Draw => opponent_move,
+        ElfSuggestion::Win => match opponent_move {
+            Move::Rock => Move::Paper,
+            Move::Paper => Move::Scissors,
+            Move::Scissors => Move::Rock,
+        },
+    }
+}
+
+impl ElfSuggestion {
+    fn from_str(s: &str) -> ElfSuggestion {
+        match s {
+            "X" => ElfSuggestion::Lose,
+            "Y" => ElfSuggestion::Draw,
+            "Z" => ElfSuggestion::Win,
+            _ => panic!("Invalid elf suggestion"),
+        }
+    }
+}
+
 impl Move {
-    fn from_str(s: &str) -> Move {
+    // this is based on part one of the problem
+    fn from_str_chosen_move_scheme(s: &str) -> Move {
         match s {
             "A" => Move::Rock,
             "B" => Move::Paper,
@@ -46,14 +83,35 @@ impl Move {
     }
 }
 
-fn main() {
+// the second column tells us the suggestion from the elf
+fn part_two() {
     let input = get_input();
     let mut score = 0;
     input.lines().for_each(|line| {
-        let opponent_move = Move::from_str(line[0..1].trim());
-        let my_move = Move::from_str(line[2..3].trim());
+        let opponent_move = Move::from_str_chosen_move_scheme(line[0..1].trim());
+        let elf_suggestion = ElfSuggestion::from_str(line[2..3].trim());
+        let elf_suggested_move = choose_move(opponent_move, elf_suggestion);
+
+        let round_score = elf_suggested_move.get_score(opponent_move);
+        score += round_score;
+
+        println!(
+            "Opponent: {:?}, elf_suggested: {:?}, Me: {:?}, Roundscore: {:?}, Score: {:?}",
+            opponent_move, elf_suggestion, elf_suggested_move, round_score, score
+        );
+    });
+
+    println!("Final score: {:?}", score);
+}
+
+fn part_one() {
+    let input = get_input();
+    let mut score = 0;
+    input.lines().for_each(|line| {
+        let opponent_move = Move::from_str_chosen_move_scheme(line[0..1].trim());
+        let my_move = Move::from_str_chosen_move_scheme(line[2..3].trim());
         let round_score = my_move.get_score(opponent_move);
-        score += my_move.get_score(opponent_move);
+        score += round_score;
 
         println!(
             "Opponent: {:?}, Me: {:?}, Roundscore: {:?}, Score: {:?}",
@@ -62,6 +120,10 @@ fn main() {
     });
 
     println!("Final score: {:?}", score);
+}
+
+fn main() {
+    part_two();
 }
 
 fn get_input() -> String {
